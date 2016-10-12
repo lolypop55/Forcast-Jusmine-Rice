@@ -39,14 +39,13 @@
 	$num=0;
 	while($objResult = mysql_fetch_array($objQuery))
 	{
-		$num++;
 	?>
 	  <tr>
 		<td><div align="center"><?php echo $objResult["VolID"];?></div></td>
 		<td><div align="center"><?php echo $objResult["VolM"];?></div></td>
 		<td><div align="center"><?php echo $objResult["VolY"];?></div></td>
 		<td><div align="center"><?php echo $objResult["Vol"];?></div></td>
-		<td><div align="center"><a href="test.php?id=<?php echo $objResult["VolID"];?>">Edit</a></div></td>
+		<td><div align="center"><a href="edit_volm.php?id=<?php echo $objResult["VolID"];?>">Edit</a></div></td>
 		<td><div align="center"><a href="add_volm_del.php?id=<?php echo $objResult["VolID"];?>">Delete</a></div></td>
 
 	  </tr>
@@ -55,7 +54,6 @@
 	?>
 	</table>
 	<?php
-	echo $num;
 	mysql_close();
 ?>
 	<br>

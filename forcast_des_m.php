@@ -21,15 +21,18 @@
 	*/
 	$num=1;
 	$temp=0;
+
+	//$alp=0.2;
+
 	mysql_connect("$host","$user","$password");
 	mysql_select_db("$mydatabase");
     
     //  Del Table dma-m
-	$strDEL = "DELETE FROM vol_dma_m ";
+	$strDEL = "DELETE FROM vol_des_m ";
 	$objQuery = mysql_query($strDEL);
 
 	// Del Table error_dma
-	$strDEL = "DELETE FROM vol_error_dma_m ";
+	$strDEL = "DELETE FROM vol_error_des_m ";
 	$objQuery = mysql_query($strDEL);
 
 
@@ -59,95 +62,89 @@
 
 	return array_sum($arr)/count($arr);
 	}
-	//m1t colum
+
+
+
+for($alp=0.1 ; $alp<1 ;$alp+=0.01)
+{
+
+
+	//s1t colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x<3)
-		$m1t[$x]=0;
+	if($x<1)
+		$s1t[$x]=$z[$x];
 	else{
-		$m1t[$x]=($z[$x-3]+$z[$x-2]+$z[$x-1])/3;
+		$s1t[$x]=$alp*$z[$x]+(1-$alp)*$s1t[$x-1];
 		}
 	}
-	//m2t colum
+
+	//s2t colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x<6)
-		$m2t[$x]=0;
+	if($x<1)
+		$s2t[$x]=$z[$x];
 	else{
-		$m2t[$x]=($m1t[$x-3]+$m1t[$x-2]+$m1t[$x-1])/3;
+		$s2t[$x]=$alp*$s1t[$x]+(1-$alp)*$s2t[$x-1];
 		}
 	}
+
 	//b0t colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x<6)
-		$b0t[$x]=0;
+	if($x<1)
+		$b0t[$x]=$z[$x];
 	else{
-		$b0t[$x]=2*$m1t[$x]-$m2t[$x];
+		$b0t[$x]=2*$s1t[$x]-$s2t[$x];
 		}
 	}
+
 	//b1t colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x<6)
+	if($x<1)
 		$b1t[$x]=0;
 	else{
-		$b1t[$x]=$m1t[$x]-$m2t[$x];
+		$b1t[$x]=$alp/(1-$alp)*($s1t[$x]-$s2t[$x]);
 		}
 	}
 	//Zt colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x<7)
-		$zt[$x]=0;
-	else{
-		$zt[$x]=$b0t[$x-1]+$b1t[$x-1];
-		}
+		
+		$zt[$x]=$b0t[$x]+$b1t[$x];
 	}
-	//Zt colum
-	for($x = 0; $x < $countz; $x++) {
-	if($x<7)
-		$z1t[$x]=0;
-	else{
-		$z1t[$x]=$b0t[$x-1]+$b1t[$x-1];
-		}
-	}
+	
 	//et colum
+
 	for($x = 0; $x < $countz; $x++) {
-	if($x<7)
-		$et[$x]=0;
-	else{
-		$et[$x]=$z[$x]-$z1t[$x];
-		}
+	
+		$et[$x]=$z[$x]-$zt[$x];
+
 	}
+
 	//forcast
 	for($x = 0; $x < $countz+12; $x++) {
 	if($x < $countz)
 		;
 	else{
 		$temp++;
-		$z1t[$x]=$b0t[$countz-1]+$temp*$b1t[$countz-1];
+		$zt[$x]=$b0t[$countz-1]+$temp*$b1t[$countz-1];
 		}
 	}
-	//mse colum
+
+		//mse colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x < 7)
-		;
-	else{
+
 		$mse[$x]=abs($et[$x]*$et[$x]);
-		}
+
 	}
 	//mad colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x < 7)
-		;
-	else{
+
 		$mad[$x]=abs($et[$x]);
-		}
+
 	}
 	//mape colum
 	for($x = 0; $x < $countz; $x++) {
-	if($x < 7)
-		;
-	else{
+
 		 $mape[$x]=abs(($et[$x]/$z[$x])*100);
-		 
-		}
+
 	}
 
 	$msef=average($mse);
@@ -164,12 +161,13 @@
 
 
 	<table width="1000" border="1">
-	<p> Double moving average, DMA </p>
+	<p> Double exponential smoothing, DES </p>
+	<p> Alpha = <?php echo $alp; ?> </p>
 	  <tr>
 		<th width="100"> <div align="center">T </div></th>
 		<th width="100"> <div align="center">Zt </div></th>
-		<th width="100"> <div align="center">M1t </div></th>
-		<th width="100"> <div align="center">M2t </div></th>
+		<th width="100"> <div align="center">S1t </div></th>
+		<th width="100"> <div align="center">S2t </div></th>
 		<th width="100"> <div align="center">b0t </div></th>
 		<th width="100"> <div align="center">b1t </div></th>
 		<th width="100"> <div align="center">Z1t </div></th>
@@ -182,11 +180,11 @@
 	  <tr>
 		<td><div align="center"><?php echo $t[$x];?></div></td>
 		<td><div align="center"><?php echo $z[$x];?></div></td>
-		<td><div align="center"><?php echo sprintf("%01.2f",$m1t[$x]);?></div></td>
-		<td><div align="center"><?php echo sprintf("%01.2f",$m2t[$x]);?></div></td>
+		<td><div align="center"><?php echo sprintf("%01.2f",$s1t[$x]);?></div></td>
+		<td><div align="center"><?php echo sprintf("%01.2f",$s2t[$x]);?></div></td>
 		<td><div align="center"><?php echo sprintf("%01.2f",$b0t[$x]);?></div></td>
-		<td><div align="center"><?php echo sprintf("%01.2f",$b1t[$x]);?></div></td>
-		<td><div align="center"><?php echo sprintf("%01.2f",$z1t[$x]);?></div></td>
+		<td><div align="center"><?php echo sprintf("%01.3f",$b1t[$x]);?></div></td>
+		<td><div align="center"><?php echo sprintf("%01.2f",$zt[$x]);?></div></td>
 		<td><div align="center"><?php echo sprintf("%01.2f",$et[$x]);?></div></td>
 	  </tr>
 	<?php
@@ -201,7 +199,7 @@
 		<td><div align="center"></div></td>
 		<td><div align="center"></div></td>
 		<td><div align="center"></div></td>
-		<td><div align="center"><?php echo sprintf("%01.2f",$z1t[$x+$countz]); ?></div></td>
+		<td><div align="center"><?php echo sprintf("%01.2f",$zt[$x+$countz]); ?></div></td>
 		<td><div align="center"></div></td>
 
 	  </tr>
@@ -249,30 +247,41 @@
 		<td><div align="center"></div></td>
 	  </tr>
 	</table>
+
+
+<?php
+
+}
+
+?>
+
+
+
+
 	<?php
-	for($x = 0; $x < count($z1t); $x++) {
+	for($x = 0; $x < count($zt); $x++) {
 
 		if ($x < $countz){
-			$strSQL = "INSERT INTO vol_dma_m ";
-			$strSQL .="(t,zt,m1t,m2t,b0t,b1t,z1t,et) ";
+			$strSQL = "INSERT INTO vol_des_m ";
+			$strSQL .="(t,zt,s1t,s2t,b0t,b1t,z1t,et) ";
 			$strSQL .="VALUES ";
-			$strSQL .="('".$t[$x]."','".$z[$x]."','".$m1t[$x]."' ";
-			$strSQL .=",'".$m2t[$x]."','".$b0t[$x]."','".$b1t[$x]."','".$z1t[$x]."','".$et[$x]."') ";
+			$strSQL .="('".$t[$x]."','".$z[$x]."','".$s1t[$x]."' ";
+			$strSQL .=",'".$s2t[$x]."','".$b0t[$x]."','".$b1t[$x]."','".$zt[$x]."','".$et[$x]."') ";
 			$objQuery = mysql_query($strSQL) or die ("Error Query [".$strSQL."]");
 			
 		}
 		else{
 			$time=$x+1;
-			$strSQL = "INSERT INTO vol_dma_m ";
-			$strSQL .="(t,zt,m1t,m2t,b0t,b1t,z1t,et) ";
+			$strSQL = "INSERT INTO vol_des_m ";
+			$strSQL .="(t,zt,s1t,s2t,b0t,b1t,z1t,et) ";
 			$strSQL .="VALUES ";
 			$strSQL .="('".$time."','0','0' ";
-			$strSQL .=",'0','0','0','".$z1t[$x]."','0') ";
+			$strSQL .=",'0','0','0','".$zt[$x]."','0') ";
 			$objQuery = mysql_query($strSQL) or die ("Error Query [".$strSQL."]");
 		}
 
 	}
-	$strSQL = "INSERT INTO vol_error_dma_m ";
+	$strSQL = "INSERT INTO vol_error_des_m ";
 	$strSQL .="(mse,rmse,mad,mape) ";
 	$strSQL .="VALUES ";
 	$strSQL .="('".$msef."','".$rmsef."','".$madf."','".$mapef."') ";
@@ -291,7 +300,7 @@
 ?>
 
 	<br>
-	<a href="graph_dma_m.php">See Graph</a><br>
+	<a href="graph_des_m.php">See Graph</a><br>
   <br>
   <a href="admin_page.php">Back</a><br>
   <br>

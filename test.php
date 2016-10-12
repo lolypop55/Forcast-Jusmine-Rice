@@ -1,6 +1,8 @@
 <?php
 
-echo "Test Page";
-echo $_GET['id'];
+for($x=0 ; $x<1 ;$x+=0.1){
+	echo $x;
+	echo "<br>";
+}
 
 ?>
